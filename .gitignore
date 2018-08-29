@@ -2,6 +2,6 @@
 *.war
 *.jar
 *.ear
-.out/*
-.target/*
+out/*
+target/*
 web_task1.iml
