@@ -1,9 +1,0 @@
-.idea/*
-*.war
-*.jar
-*.ear
-out/*
-target/*
-.gitignore
-web_task1.iml
-lib/*
