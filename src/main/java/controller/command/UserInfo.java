@@ -5,7 +5,7 @@ import model.entity.User;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 
-public class UserInfo implements Command {
+public class UserInfo implements CommandServlet {
     @Override
     public String execute(HttpServletRequest request) {
 

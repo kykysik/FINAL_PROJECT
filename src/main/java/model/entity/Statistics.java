@@ -4,25 +4,43 @@ import java.sql.Date;
 
 public class Statistics {
 
+    private int id;
     private String userLogin;
-    private String foodName;
+    private String name;
     private float fats;
     private float proteins;
     private float carbohydrates;
     private float calories;
     private int amount;
     private Date date; // глянуть
+    private String type;
 
     //Конструктор
-    public Statistics(String foodName, float proteins, float carbohydrates,
+    public Statistics(int id, String name, float calories, int amount, Date date) {
+        this.id = id;
+        this.name = name;
+        this.calories = calories;
+        this.amount = amount;
+        this.date = date;
+
+    }
+    public Statistics(String name, float proteins, float carbohydrates,
                       float fats, float calories, int amount, Date date) {
-        this.foodName = foodName;
+        this.name = name;
         this.proteins = proteins;
         this.carbohydrates = carbohydrates;
         this.fats = fats;
         this.calories = calories;
         this.amount = amount;
         this.date = date;
+    }
+
+    public int getId() {
+        return id;
+    }
+
+    public void setId(int id) {
+        this.id = id;
     }
 
     public String getUserLogin() {
@@ -33,12 +51,12 @@ public class Statistics {
         this.userLogin = userLogin;
     }
 
-    public String getFoodName() {
-        return foodName;
+    public String getName() {
+        return name;
     }
 
-    public void setFoodName(String foodName) {
-        this.foodName = foodName;
+    public void setName(String name) {
+        this.name = name;
     }
 
     public float getFats() {
@@ -87,5 +105,13 @@ public class Statistics {
 
     public void setDate(Date date) {
         this.date = date;
+    }
+
+    public String getType() {
+        return type;
+    }
+
+    public void setType(String type) {
+        this.type = type;
     }
 }

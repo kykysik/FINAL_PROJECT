@@ -10,21 +10,15 @@ import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.SQLException;
 
-public class JDBCDaoFactory extends DaoFactory {
+public class JDBCUserDaoFactory extends UserDaoFactory {
     private DataSource dataSource = ConnectionPoolHolder.getDataSource();
 
     @Override
-    public ProductsDao findAll(){
-        return new ProductsUtils(getConnection());
-    }
-
-    @Override
-    public PortionsDao findAllPortions(){
-        return new PortionsUtils(getConnection());
-    }
-
-    @Override
     public UserDao findByUserName() {
+        return new UserUtils(getConnection());
+    }
+    @Override
+    public UserDao findForCookie() {
         return new UserUtils(getConnection());
     }
 
@@ -37,19 +31,6 @@ public class JDBCDaoFactory extends DaoFactory {
     public UserDao find() {
         return new UserUtils(getConnection());
     }
-
-    @Override
-    public ProductsDao getNumberOfRows() {
-        return new ProductsUtils(getConnection());
-    }
-
-    @Override
-    public PortionsDao getNumberOfRowsPortions() {
-        return new PortionsUtils(getConnection());
-    }
-
-
-
 
     private Connection getConnection(){
 

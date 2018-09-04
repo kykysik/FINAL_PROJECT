@@ -11,9 +11,7 @@ import static view.TextConstant.WRONG_INPUT_DATA;
 
  public class CheckOnCorrectness {
      User user;
-     String error;
-    //DaoFactory factory = DaoFactory.getInstance();
-    //GenericDao dbUtils = factory.createUser();
+     String error = null;
      UserService utils = new UserService();
      CheckUser services;
 
@@ -33,7 +31,7 @@ import static view.TextConstant.WRONG_INPUT_DATA;
             return error;
 
         } else if(list.contains(user.getLogin())){
-
+            System.out.println(list.contains(user.getLogin()));
                 try {
                     throw new LoginException();
                 } catch (LoginException e) {

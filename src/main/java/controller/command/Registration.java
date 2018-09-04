@@ -1,74 +1,54 @@
 package controller.command;
 
+import controller.LocalController;
 import model.entity.User;
-import model.services.CheckOnCorrectness;
+import model.services.CaloriesNorm;
 
 import javax.servlet.http.HttpServletRequest;
 
 import java.sql.Date;
+import java.time.LocalDate;
 
-import java.util.Locale;
-import java.util.ResourceBundle;
 
-import static controller.RegExContainer.*;
-import static controller.RegExContainer.REGEX_LOGIN_UA;
-import static controller.RegExContainer.REGEX_NAME_UA;
-import static view.TextConstant.*;
-
-public class Registration implements Command {
+public class Registration implements CommandServlet {
     String error;
+    String errorStr;
     User user;
+    LocalController local = new LocalController();
 
     @Override
     public String execute(HttpServletRequest req) {
+        CaloriesNorm caloriesNorm = new CaloriesNorm();
         error = null;
-        if(req.getParameter("lang") == null) { // УБРАТЬ ЭТО
-            return "/WEB-INF/regForm.jsp";
-        }
-        String temp;
+        errorStr = null;
+        String gender = req.getParameter("gender");
         String login = req.getParameter("login"); ;
         String secondName = req.getParameter("secondName");
         String firstName = req.getParameter("firstName");
         String middleName = req.getParameter("middleName");
         String password = req.getParameter("password");
         String lang = req.getParameter("lang");
-        String gender = req.getParameter("gender");
-        Date  birthDate = Date.valueOf(req.getParameter("birthDate"));
-        Float lifeActivity = Float.valueOf(req.getParameter("lifeActivity"));
-        Float height = Float.valueOf(req.getParameter("height"));
-        Float weight = Float.valueOf(req.getParameter("weight"));
 
+        if(login != null) {
+            LocalDate birthDate = LocalDate.parse(req.getParameter("birthDate"));
+            Float lifeActivity = Float.valueOf(req.getParameter("lifeActivity"));
+            Float height = Float.valueOf(req.getParameter("height"));
+            Float weight = Float.valueOf(req.getParameter("weight"));
 
-        user = new User(secondName, firstName, middleName, login, password,
-                gender, birthDate, lifeActivity, height, weight);
+            user = new User(secondName, firstName, middleName, login, password,
+                    gender, birthDate, lifeActivity, height, weight);
 
-        CheckOnCorrectness check = new CheckOnCorrectness(user);
-
-        ResourceBundle bundle = ResourceBundle.getBundle(
-                MESSAGES_BUNDLE_NAME, new Locale(lang));
-        switch (lang) { // В КОММАНД!
-            case EN:
-                if ((temp = check.checkInputData(REGEX_NAME_ENG, REGEX_LOGIN_ENG, bundle)) != null) {
-                    error = temp;
-                }
-                break;
-            case RU:
-                if ((temp = check.checkInputData(REGEX_NAME_RUS, REGEX_LOGIN_RUS, bundle)) != null) {
-                    error = temp;
-                }
-                break;
-            case UA:
-                if ((temp = check.checkInputData(REGEX_NAME_UA, REGEX_LOGIN_UA, bundle)) != null) {
-                    error = temp;
-                }
-                break;
+             user = caloriesNorm.findNormCalories(user);
+            System.out.println(user.getNormCalories());
+            error = local.checkLangAndCorrectness(lang, user);
+        }else {
+            errorStr = "error";
         }
 
         req.setAttribute("user", user);
         req.setAttribute("error",error);
-        if(error != null) {
+        if(error != null || errorStr != null) {
             return "/WEB-INF/regForm.jsp";
-
         }else return "/login";
     }
 }

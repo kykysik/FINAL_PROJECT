@@ -1,28 +1,30 @@
 package model.entity;
 
 import java.sql.Date;
+import java.time.LocalDate;
 
 public class User {
-
+    private int id;
     private String secondName;
     private String firstName;
     private String middleName;
     private String login;
     private String password;
     private String gender;
-    private Date birthDate; // глянуть
-    private float lifeActivity;
-    private float height;
-    private float weight;
-    private float normCalories;
-    private ROLE role;
+    private LocalDate birthDate; // глянуть
+    private Float lifeActivity;
+    private Float height;
+    private Float weight;
+    private Float normCalories;
+    private String mail;
+    private ROLE role = ROLE.UNKNOWN;
 
     public User() {
 
     }
 
     public User(String secondName, String firstName, String  middleName, String login, String password,
-                String gender, Date birthDate, float lifeActivity, float height, float weight) {
+                String gender, LocalDate birthDate, Float lifeActivity, Float height, Float weight) {
 
         this.middleName = middleName;
         this.secondName = secondName;
@@ -38,6 +40,14 @@ public class User {
 
     public enum ROLE {
         USER, UNKNOWN, ADMIN
+    }
+
+    public int getId() {
+        return id;
+    }
+
+    public void setId(int id) {
+        this.id = id;
     }
 
     public float getNormCalories() {
@@ -56,11 +66,11 @@ public class User {
         this.gender = gender;
     }
 
-    public Date getBirthDate() {
+    public LocalDate getBirthDate() {
         return birthDate;
     }
 
-    public void setBirthDate(Date birthDate) {
+    public void setBirthDate(LocalDate birthDate) {
         this.birthDate = birthDate;
     }
 
@@ -96,17 +106,18 @@ public class User {
         this.password = password;
     }
 
-    /**
-     * @return secondName.
-     */
+    public ROLE getRole() {
+        return role;
+    }
+
+    public void setRole(ROLE role) {
+        this.role = role;
+    }
+
     public String getLogin() {
         return login;
     }
 
-    /**
-     *This method set string value in secondName
-     * @param login
-     */
     public void setLogin(String login) {
         this.login = login;
     }
@@ -133,5 +144,13 @@ public class User {
 
     public void setMiddleName(String middleName) {
         this.middleName = middleName;
+    }
+
+    public String getMail() {
+        return mail;
+    }
+
+    public void setMail(String mail) {
+        this.mail = mail;
     }
 }

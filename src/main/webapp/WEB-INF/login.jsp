@@ -18,35 +18,30 @@
     <title>Login</title>
 </head>
 <body>
+<p style="color: red;">${errorString}</p>
 
-<p style="color: red;">${error}</p>
-
-<form>
-    <select id="language" name="language" onchange="submit()">
-        <option value="en" ${language == 'en' ? 'selected' : ''}>EN</option>
-        <option value="ru" ${language == 'ru' ? 'selected' : ''}>RU</option>
-        <option value="ua" ${language == 'ua' ? 'selected' : ''}>UA</option>
-    </select>
-</form>
+<jsp:include page="/WEB-INF/_menu.jsp"/>
+|
+<a style="color: #000000;font-weight: bold;" href="/"><fmt:message key="input.start_page"/></a>
 
 <form class="form" method="POST" action="${pageContext.request.contextPath}/login">
     <table border="0">
         <tr>
-            <td>User Name</td>
-            <td><input required type="text" name="login" value= "${user.login}" /> </td>
+            <td><label for="login"><fmt:message key="login.label.username" />:</label></td>
+            <td><input required type="text" name="login" value= "${user.login}" id="login" /> </td>
         </tr>
         <tr>
-            <td>Password</td>
-            <td><input required type="password" name="password" value= "${user.password}" /> </td>
+            <td><label for="password"><fmt:message key="login.label.password" />:</label></td>
+            <td><input required type="password" name="password" value= "${user.password}" id="password" /> </td>
         </tr>
         <tr>
-            <td>Remember me</td>
-            <td><input type="checkbox" name="rememberMe" value= "Y" /> </td>
+            <td><label for="remember"><fmt:message key="login.label.remember" />:</label></td>
+            <td><input type="checkbox" name="rememberMe" value= "Y" id="remember" /> </td>
         </tr>
         <tr>
             <td colspan ="2">
-                <input type="submit" value= "Submit" />
-                <a href="${pageContext.request.contextPath}/">Cancel</a>
+                <fmt:message key="login.button.submit" var="buttonValue" />
+                <input type="submit" value= "${buttonValue}"  />
             </td>
         </tr>
     </table>

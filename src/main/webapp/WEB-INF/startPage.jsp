@@ -1,4 +1,5 @@
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+<%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
 <%--
   Created by IntelliJ IDEA.
   User: kykysik
@@ -12,16 +13,7 @@
 </head>
 <body>
 
-<a style="color: #000000;font-weight: bold;" href="/home/registration">regForm</a>
-<a style="color: #000000;font-weight: bold;" href="/home/userInfo">userInfo</a>
-<a style="color: #000000;font-weight: bold;" href="/home/statistics">statistics</a>
-<a style="color: #000000;font-weight: bold;" href="/home/menu">menu</a>
-<c:if test="${user != null}">
-    <a style="color: #000000;font-weight: bold;" href="${pageContext.request.contextPath}/logout">LogOut</a>
-</c:if>
-<c:if test="${user == null}">
-    <a style="color: #000000;font-weight: bold;" href="${pageContext.request.contextPath}/login">LogIn</a>
-</c:if>
+<jsp:include page="/WEB-INF/_menu.jsp"/>
 
 <form class="form" method="POST" action="${pageContext.request.contextPath}/startPage">
 

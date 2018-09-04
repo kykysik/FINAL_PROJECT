@@ -1,14 +1,11 @@
 package controller.command;
 
-import model.entity.Product;
-import model.services.ProductService;
-
 import javax.servlet.http.HttpServletRequest;
-import java.util.List;
 
-public class Menu implements Command {
+public class Menu implements CommandServlet {
     @Override
     public String execute(HttpServletRequest request) {
+
         return "/WEB-INF/menu.jsp";
 
 

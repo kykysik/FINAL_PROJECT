@@ -5,15 +5,31 @@ public class Portions {
     private int id;
     private String name;
     private float calories;
+    private int amount;
 
      public Portions() {
 
+     }
+
+     public Portions(int id, String name, float calories, int amount) {
+         this.id = id;
+         this.name = name;
+         this.calories = calories;
+         this.amount = amount;
      }
 
     public Portions(int id, String name, float calories) {
         this.id = id;
         this.name = name;
         this.calories = calories;
+    }
+
+    public int getAmount() {
+        return amount;
+    }
+
+    public void setAmount(int amount) {
+        this.amount = amount;
     }
 
     public int getId() {

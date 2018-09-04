@@ -3,20 +3,18 @@ package controller.command;
 import model.entity.User;
 
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
-public class LogOut implements Command {
+public class LogOut implements CommandServlet {
     @Override
     public String execute(HttpServletRequest request) {
-
+        HttpServletResponse response = (HttpServletResponse) request.getAttribute("resp");
         HttpSession session = request.getSession();
-        User u = (User) request.getAttribute("user");
-
 
         User user =  CommandUtility.getLoginedUser(session);
-        System.out.println("TEST: ");
-        System.out.println(user.getLogin());
         CommandUtility.setUserRole(request, User.ROLE.UNKNOWN, user.getLogin());
+        CommandUtility.deleteUserCookie(response);
         session.invalidate();
 
         request.setAttribute("user", user);
@@ -24,7 +22,7 @@ public class LogOut implements Command {
         if(user == null){
             return  "/login";
         }else {
-            return "/WEB-INF/startPage";
+            return "/";
         }
 
     }//f5

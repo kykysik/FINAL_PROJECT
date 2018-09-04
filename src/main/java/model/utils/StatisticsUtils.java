@@ -2,42 +2,68 @@ package model.utils;
 
 import model.dao.StatisticsDao;
 import model.entity.Statistics;
-import model.entity.User;
 
-
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.SQLException;
+import java.sql.*;
+import java.util.ArrayList;
 import java.util.List;
 
 public class StatisticsUtils implements StatisticsDao {
     Connection connection;
-    User user;
-
     public StatisticsUtils(Connection connection) {
         this.connection = connection;
     }
 
     @Override
-    public void create(Statistics stat) {
-        user = new User();
+    public boolean create(Statistics stat) {
+        return false;
+    }
 
-       String sql = "INSERT INTO statistics(user_login,food_name, fats, proteins, carbohydrates, calories, amount, date)" +
-  "SELECT ? ,name, fats, proteins, carbohydrates, calories, ?, ? FROM food WHERE name = ?";
+    @Override
+    public void deleteAfterInsert(Date date) {
+        try {
 
-        try(PreparedStatement pstm = connection.prepareStatement(sql)) {
+            connection.setAutoCommit(false);
 
-                /*
-                * Тут нужно сделать что-то с параметрами 1,2,3.
-                * Date через геттер нужно преобразовывать в нужный формат: 2018-02-23. Как-то так.
-                * */
-            pstm.setString(1,user.getLogin());
-            pstm.setFloat(2,user.getLifeActivity());
-            pstm.setDate(3,user.getBirthDate());
-            pstm.setString(4,"name");
-            pstm.executeUpdate();
+            String userProductsSql = "" +
+                    "INSERT INTO statistics(name, proteins, fats, carbohydrates, calories, amount, date, user_id) " +
+                    "SELECT products.name, proteins, fats, carbohydrates, calories, u.amount, u.date, user_id  " +
+                    "FROM products " +
+                    "JOIN user_products u ON products.id = u.products_id " +
+                    "JOIN user u2 ON u.user_id = u2.id WHERE u.date != ? " +
+                    "UNION ALL SELECT p.name, proteins, fats, carbohydrates, p.calories, u.amount, u.date, user_id " +
+                    "FROM user " +
+                    "JOIN user_portions u ON user.id = u.portions_id " +
+                    "JOIN portions p ON u.portions_id = p.id " +
+                    "JOIN portions_products product ON p.id = product.portions_id " +
+                    "JOIN products p2 ON product.products_id = p2.id WHERE u.date != ?";
+
+            String delProducts = "DELETE  FROM user_products WHERE date <> ?";
+
+            String delPortions = "DELETE FROM user_portions WHERE date <> ?";
+
+            try(PreparedStatement pstm = connection.prepareStatement(userProductsSql);
+            PreparedStatement pstm1 = connection.prepareStatement(delProducts);
+                PreparedStatement pstm2 = connection.prepareStatement(delPortions)) {
+
+                pstm.setDate(1,date);
+                pstm.setDate(2,date);
+
+                pstm1.setDate(1,date);
+                pstm2.setDate(1,date);
+
+                pstm.executeUpdate();
+                pstm1.executeUpdate();
+                pstm2.executeUpdate();
+                connection.commit();
+
+            } catch (SQLException e) {
+                connection.rollback();
+
+                e.printStackTrace();
+            }
 
         } catch (SQLException e) {
+
             e.printStackTrace();
         }
     }
@@ -58,30 +84,73 @@ public class StatisticsUtils implements StatisticsDao {
     * */
 
     @Override
-    public List<Statistics> findAll() {
-       /* String sql = "SELECT * FROM statistics ORDER BY id DESC";
+    public List<Statistics> findAll(int currentPage, int recordsPerPage, int userId, Date date) {
+        String sql = "SELECT user_id, id, name, calories, amount, date, `type` FROM " +
+                "(SELECT user_id, u.id, name, calories, amount, date, 'portion' as type" +
+                " FROM portions JOIN user_portions u ON portions.id = u.portions_id " +
+                "JOIN user u2 ON u.user_id = u2.id " +
+                "UNION ALL " +
+                "SELECT user_id, product.id, name, calories, amount, date, 'product' as type FROM products " +
+                "JOIN user_products product ON products.id = product.products_id " +
+                "JOIN user u3 ON product.user_id = u3.id " +
+                "UNION ALL " +
+                "SELECT user_id, statistics.id, name, calories, amount, date, 'statistics' as type FROM statistics) X WHERE user_id = ? AND date = ? LIMIT ?, ?";
 
+        int start = currentPage * recordsPerPage - recordsPerPage;
         List<Statistics> foods = new ArrayList<>();
 
         try(PreparedStatement pstm = connection.prepareStatement(sql)) {
+            pstm.setInt(1, userId);
+            pstm.setDate(2, date);
+            pstm.setInt(3, start);
+            pstm.setInt(4, recordsPerPage);
 
             ResultSet rs = pstm.executeQuery();
 
             while (rs.next()) {
-                //  int id = rs.getInt("id");
+                int id = rs.getInt("id");
+                String type = rs.getString("type");
                 String name = rs.getString("name");
-                Float proteins = rs.getFloat("proteins");
-                Float carbohydrates = rs.getFloat("carbohydrates");
-                Float fats = rs.getFloat("fats");
                 Float calories = rs.getFloat("calories");
-                foods.add(new Statistics(name, proteins, carbohydrates, fats, calories));
+                int amount  = rs.getInt("amount");
+
+                Statistics statistics = new Statistics(id, name, calories, amount, date);
+                statistics.setType(type);
+                foods.add(statistics);
             }
 
         } catch (SQLException e) {
             e.printStackTrace();
+            e.getMessage();
         }
-        return foods;*/
-       return null;
+        return foods;
+    }
+
+    @Override
+    public int getNumberOfRows(int userId, Date date) {
+        int numOfRows = 0;
+        String sql = "SELECT COUNT(products_id) as idAll, user_id, date FROM user_products WHERE user_id = ? AND date = ? UNION ALL " +
+                "SELECT COUNT(portions_id) as idAll, user_id, date FROM user_portions WHERE user_id = ? AND date = ? " +
+                "UNION ALL SELECT COUNT(id) as idAll, user_id, date FROM statistics WHERE user_id = ? AND date = ?  ";
+        try(PreparedStatement pstm = connection.prepareStatement(sql)) {
+            pstm.setInt(1, userId);
+            pstm.setDate(2, date);
+            pstm.setInt(3, userId);
+            pstm.setDate(4, date);
+            pstm.setInt(5, userId);
+            pstm.setDate(6, date);
+            ResultSet rs = pstm.executeQuery();
+
+            while (rs.next()) {
+                numOfRows += rs.getInt("idAll");
+            }
+
+        } catch (SQLException e) {
+            e.getMessage();
+            e.printStackTrace();
+        }
+        System.out.println(numOfRows);
+        return numOfRows;
     }
 
     @Override
@@ -90,13 +159,13 @@ public class StatisticsUtils implements StatisticsDao {
     }
 
     @Override
-    public void delete(Statistics statistics) {
+    public void delete(int id) {
 
-        String sql = "DELETE * FROM statistics WHERE food_name = ?";
+        String sql = "DELETE FROM statistics WHERE id = ?";
 
         try(PreparedStatement pstm = connection.prepareStatement(sql)) {
 
-            pstm.setString(1, statistics.getFoodName());
+            pstm.setInt(1, id);
             pstm.executeUpdate();
 
         } catch (SQLException e) {
@@ -106,7 +175,11 @@ public class StatisticsUtils implements StatisticsDao {
 
     @Override
     public void close() {
-
+        try {
+            connection.close();
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
     }
 
 }

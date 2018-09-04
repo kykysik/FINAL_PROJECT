@@ -14,26 +14,19 @@
 <fmt:setLocale value="${language}"/>
 <fmt:setBundle basename="resources" />
 
-
-
 <!DOCTYPE html>
 <html lang="${language}">
 <head>
     <title>Login</title>
 
-        <a href="/home/startPage">startPage</a>
-
 </head>
 <body>
 <p style="color: red;">${error}</p>
 
-<form>
-    <select id="language" name="language" onchange="submit()">
-        <option value="en" ${language == 'en' ? 'selected' : ''}>EN</option>
-        <option value="ru" ${language == 'ru' ? 'selected' : ''}>RU</option>
-        <option value="ua" ${language == 'ua' ? 'selected' : ''}>UA</option>
-    </select>
-</form>
+<jsp:include page="/WEB-INF/_menu.jsp"/>
+|
+<a style="color: #000000;font-weight: bold;" href="/"><fmt:message key="input.start_page"/></a>
+
 
 <form class="form" method="post" action="${pageContext.request.contextPath}/registration">
 
@@ -69,6 +62,9 @@
         </tr>
 
         <tr>
+            <td><label for="very_low"><fmt:message key="input.activity.very_low" />:</label></td>
+            <td><input required type="radio" id="very_low" name="lifeActivity" value="1.2"/> </td>
+        </tr><tr>
             <td><label for="low"><fmt:message key="input.activity.low" />:</label></td>
             <td><input required type="radio" id="low" name="lifeActivity" value="1.375"/> </td>
         </tr>
@@ -81,21 +77,24 @@
             <td><input required type="radio" id="hight" name="lifeActivity" value="1.725"/> </td>
         </tr>
         <tr>
+            <td><label for="very_hight"><fmt:message key="input.activity.very_height" />:</label></td>
+            <td><input required type="radio" id="very_hight" name="lifeActivity" value="1.9"/> </td>
+        </tr>
+        <tr>
             <td><label for="date"><fmt:message key="input.date" />:</label></td>
             <td><input required type="date" id="date" name="birthDate"/> </td>
         </tr>
         <tr>
-            <td>Male</td>
+            <td><label for="date"><fmt:message key="input.male" />:</label></td>
             <td><input type="radio" name="gender" value="M"/></td>
         </tr>
         <tr>
-            <td>Female</td>
+            <td><label for="date"><fmt:message key="input.female" />:</label></td>
             <td><input type="radio" name="gender" value="F"/></td>
         </tr>
         <tr>
             <td colspan ="2">
                 <fmt:message key="login.button.submit" var="buttonValue" />
-
                 <input type="submit" name="submit" value="${buttonValue}">
                 <input hidden name="lang" value="${language}">
             </td>

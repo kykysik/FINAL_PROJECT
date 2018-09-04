@@ -8,6 +8,18 @@ public class Product {
     private float proteins;
     private float carbohydrates;
     private float calories;
+    private float amount;
+
+    public Product() {
+    }
+
+    public Product(int id, String name, float calories, int amount) {
+        this.id = id;
+        this.name = name;
+        this.calories = calories;
+        this.amount = amount;
+    }
+
 
     public Product(int id, String name, float proteins, float carbohydrates, float fats, float calories) {
         this.id = id;
@@ -24,6 +36,14 @@ public class Product {
 
     public void setId(int id) {
         this.id = id;
+    }
+
+    public float getAmount() {
+        return amount;
+    }
+
+    public void setAmount(float amount) {
+        this.amount = amount;
     }
 
     public String getName() {

@@ -5,11 +5,9 @@ import model.entity.User;
 import java.util.List;
 
 public interface GenericDao<T> extends AutoCloseable {
-
-    void create (T entity);
-    List<T> findAll();
+    boolean create (T entity);
     void update(T entity);
-    void delete(T entity);
+    void delete(int id);
     void close();
   /*  List<T> findAll(int currentPage, int recordsPerPage) ;// Вывести список food
     int getNumberOfRows();*/

@@ -4,4 +4,6 @@
 *.ear
 out/*
 target/*
+.gitignore
 web_task1.iml
+lib/*

@@ -8,10 +8,8 @@ import java.util.HashSet;
 @WebListener(value = "/*")
 
 public class SessionListener implements HttpSessionListener {
-    private int i = 0;
     @Override
     public void sessionCreated(HttpSessionEvent httpSessionEvent) {
-        System.out.println("OOOOOOOOOOOOOOOOOOO: " + ++i);
     }
 
     @Override
@@ -21,10 +19,8 @@ public class SessionListener implements HttpSessionListener {
                 .getAttribute("loggedUsers");
         String userName = (String) httpSessionEvent.getSession().getServletContext()
                 .getAttribute("userName");
-        System.out.println("NAAAAAAMEEEEEEEEEEEEEE"+userName);
-        System.out.println("NAAAAAAMEEEEEEEEEEEEEE"+loggedUsers);
+
         loggedUsers.remove(userName);
-        System.out.println("NAAAAAAMEEEEEEEEEEEEEE"+loggedUsers);
 
         httpSessionEvent.getSession().getServletContext().setAttribute("loggedUsers", loggedUsers);
     }
