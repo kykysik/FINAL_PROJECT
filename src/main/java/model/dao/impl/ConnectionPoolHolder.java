@@ -5,6 +5,10 @@ import org.apache.commons.dbcp.BasicDataSource;
 import javax.sql.DataSource;
 
 public class ConnectionPoolHolder {
+    private static final String CLASS_NAME = "com.mysql.jdbc.Driver";
+    private static final String URL = "jdbc:mysql://localhost:3306/testDB";
+    private static final String NAME = "root";
+    private static final String PASSWORD = "6698QwEr";
     private static volatile DataSource dataSource;
 
     public static DataSource getDataSource(){
@@ -13,10 +17,10 @@ public class ConnectionPoolHolder {
             synchronized (ConnectionPoolHolder.class) {
                 if (dataSource == null) {
                     BasicDataSource ds = new BasicDataSource();
-                    ds.setDriverClassName("com.mysql.jdbc.Driver");
-                    ds.setUrl("jdbc:mysql://localhost:3306/testDB");
-                    ds.setUsername("root");
-                    ds.setPassword("6698QwEr");
+                    ds.setDriverClassName(CLASS_NAME);
+                    ds.setUrl(URL);
+                    ds.setUsername(NAME);
+                    ds.setPassword(PASSWORD);
                     ds.setMinIdle(5);
                     ds.setMaxIdle(50);
                     ds.setMaxOpenPreparedStatements(100);

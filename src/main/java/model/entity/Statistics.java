@@ -12,10 +12,13 @@ public class Statistics {
     private float carbohydrates;
     private float calories;
     private int amount;
-    private Date date; // глянуть
+    private Date date;
     private String type;
 
-    //Конструктор
+    public Statistics() {
+
+    }
+
     public Statistics(int id, String name, float calories, int amount, Date date) {
         this.id = id;
         this.name = name;

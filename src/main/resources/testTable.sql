@@ -15,7 +15,7 @@ CREATE TABLE user
   life_activity FLOAT ,
   height FLOAT  ,
   weight FLOAT ,
-  norm_calories LONG, /*может инт? + добавить почту*/
+  norm_calories LONG,
   PRIMARY KEY (id)
 );
 
@@ -93,7 +93,7 @@ CREATE TABLE statistics
 );
 
 INSERT INTO products(name, fats, proteins, carbohydrates, calories)
-VALUES('Морковь', 20, 30, 40, 100);
+VALUES('Мед', 0.8, 0, 80.3, 308);
 
 INSERT INTO products(name, fats, proteins, carbohydrates, calories)
 VALUES('Ойойойой', 200, 330, 420, 350);
@@ -132,5 +132,5 @@ INSERT INTO portions_products(portions_id, products_id, amount) VALUES (25, 6, 1
 
 
 INSERT INTO statistics(name, fats, proteins, carbohydrates,calories, amount, date, user_id)
-VALUES ('OX', 200,330,420,2100, 1, '2018-01-15', 2);
+VALUES ('Борщ', 200,330,420,2100, 1, '2018-09-04', 56);
 

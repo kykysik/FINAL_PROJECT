@@ -1,18 +1,23 @@
 package model.utils;
 
-import model.dao.UserDao;
+import model.dao.impl.user.UserDao;
+import model.dao.mapper.user.UserMapImpl;
 import model.entity.User;
+import org.apache.log4j.Logger;
 
-import javax.servlet.http.Cookie;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 import java.sql.*;
-import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+
+import static view.SqlConstant.*;
 
 public class UserUtils implements UserDao {
+    private static final String COUNT = "count";
+    private static final Logger logger = Logger.getLogger(UserUtils.class);
 
+    UserMapImpl userMapper = new UserMapImpl();
     Connection connection;
 
     public UserUtils(Connection connection) {
@@ -24,18 +29,17 @@ public class UserUtils implements UserDao {
     @Override
     public boolean create(User user) {
 
-        String preSql = "SELECT COUNT(1) AS count FROM user WHERE login = ?";
-        try(PreparedStatement pstm1 = connection.prepareStatement(preSql)) {
+        try(PreparedStatement pstm1 = connection.prepareStatement(USER_PRE_CREATE)) {
             connection.setAutoCommit(false);
+            connection.setTransactionIsolation(Connection.TRANSACTION_REPEATABLE_READ);
             pstm1.setString(1, user.getLogin());
 
             ResultSet rs = pstm1.executeQuery();
             if (rs.next()) {
-                int count = rs.getInt("count");
+                int count = rs.getInt(COUNT);
                 if(count == 0) {
-                    String sql = "INSERT INTO user(login, password, second_name, first_name, middle_name, gender, " +
-                            "birth_date, life_activity, height, weight, norm_calories) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
-                    try(PreparedStatement pstm = connection.prepareStatement(sql)) {
+
+                    try(PreparedStatement pstm = connection.prepareStatement(USER_CREATE)) {
 
                         pstm.setString(1, user.getLogin());
                         pstm.setString(2, user.getPassword());
@@ -55,80 +59,56 @@ public class UserUtils implements UserDao {
 
                     } catch (SQLException e) {
                         connection.rollback();
-                        e.printStackTrace();
+                        logger.error(e.getMessage());
                     }
                 }
 
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            logger.error(e.getMessage());
         }
         return false;
     }
 
     @Override
     public List<String> findByUserName(User user) {
-        String sql = "Select login FROM  user WHERE login = ?";
-
         ArrayList<String> list = new ArrayList<>();
 
-        try(PreparedStatement pstm = connection.prepareStatement(sql)) {
+
+        try(PreparedStatement pstm = connection.prepareStatement(FIND_BY_USER_NAME)) {
 
             pstm.setString(1, user.getLogin() );
 
             ResultSet rs = pstm.executeQuery();
             while (rs.next()) {
-                String login = rs.getString("login");
-                list.add(login);
+                user = userMapper.extractFromResult(rs);
+                list.add(user.getLogin());
             }
 
         } catch (SQLException e) {
-            e.printStackTrace();
+            logger.error(e.getMessage());
         }
         return list;
     }
 
     @Override
     public User find(String login, String password) {
-        String sql = "SELECT id, login, first_name, second_name, middle_name, gender, life_activity," +
-                "height, weight, birth_date, norm_calories FROM user WHERE login = ? AND password = ?";
+        Map<Integer, User> users = new HashMap<>();
 
-        try(PreparedStatement pstm = connection.prepareStatement(sql)) {
+        try(PreparedStatement pstm = connection.prepareStatement(FIND_USER)) {
 
             pstm.setString(1, login);
             pstm.setString(2, password);
 
             ResultSet rs = pstm.executeQuery();
             while (rs.next()) {
-                User user = new User();
-                int id = rs.getInt("id");
-                String gender = rs.getString("gender");
-                String firstName = rs.getString("first_name");
-                String secondName = rs.getString("second_name");
-                String middleName = rs.getString("middle_name");
-                String lifeActivity = rs.getString("life_activity");
-                String height = rs.getString("height");
-                String weight = rs.getString("weight");
-                LocalDate date = LocalDate.parse(rs.getString("birth_date"));
-                String normCalories = rs.getString("norm_calories");
-                user.setId(id);
-                user.setLogin(login);
-                user.setPassword(password);
-                user.setGender(gender);
-                user.setFirstName(firstName);
-                user.setMiddleName(middleName);
-                user.setSecondName(secondName);
-                user.setLifeActivity(Float.parseFloat(lifeActivity));
-                user.setHeight(Float.parseFloat(height));
-                user.setWeight(Float.parseFloat(weight));
-                user.setBirthDate(date);
-                user.setNormCalories(Float.parseFloat(normCalories));
+                model.entity.User user = userMapper.extractFromResultSet(rs);
+                user = userMapper.makeUnique(users, user);
                 return user;
-
             }
 
         } catch (SQLException e) {
-            e.printStackTrace();
+            logger.error(e.getMessage());
         }
         return null;
     }
@@ -144,44 +124,20 @@ public class UserUtils implements UserDao {
     }
 
     public User findForCookie(String login) {
-        String sql = "SELECT id, login, password, first_name, second_name, middle_name, gender, life_activity," +
-                "height, weight, birth_date, norm_calories FROM user WHERE login = ?";
+        Map<Integer, User> users = new HashMap<>();
 
-        try(PreparedStatement pstm = connection.prepareStatement(sql)) {
+        try(PreparedStatement pstm = connection.prepareStatement(FIND_FOR_COOKIE)) {
             pstm.setString(1, login);
 
             ResultSet rs = pstm.executeQuery();
             while (rs.next()) {
-                User user = new User();
-                int id = rs.getInt("id");
-                String password = rs.getString("password");
-                String gender = rs.getString("gender");
-                String firstName = rs.getString("first_name");
-                String secondName = rs.getString("second_name");
-                String middleName = rs.getString("middle_name");
-                String lifeActivity = rs.getString("life_activity");
-                String height = rs.getString("height");
-                String weight = rs.getString("weight");
-                LocalDate date = LocalDate.parse(rs.getString("birth_date"));
-                String normCalories = rs.getString("norm_calories");
-                user.setId(id);
-                user.setLogin(login);
-                user.setPassword(password);
-                user.setGender(gender);
-                user.setFirstName(firstName);
-                user.setMiddleName(middleName);
-                user.setSecondName(secondName);
-                user.setLifeActivity(Float.parseFloat(lifeActivity));
-                user.setHeight(Float.parseFloat(height));
-                user.setWeight(Float.parseFloat(weight));
-                user.setBirthDate(date);
-                user.setNormCalories(Float.parseFloat(normCalories));
+                User user = userMapper.extractFromResultSet(rs);
+                user = userMapper.makeUnique(users, user);
                 return user;
-
             }
 
         } catch (SQLException e) {
-            e.printStackTrace();
+            logger.error(e.getMessage());
         }
         return null;
     }
@@ -193,66 +149,21 @@ public class UserUtils implements UserDao {
     @Override
     public void delete(int id) {
 
-        String sql = "DELETE * FROM user WHERE id = ?";
-        try(PreparedStatement pstm = connection.prepareStatement(sql)) {
+        try(PreparedStatement pstm = connection.prepareStatement(DELETE_USER)) {
 
             pstm.setInt(1, id);
 
         } catch (SQLException e) {
-            e.printStackTrace();
+            logger.error(e.getMessage());
         }
     }
-
-
-    /*
-    public List<Car> findAllPortions() {
-        List<Car> resultList = new ArrayList<>();
-        Map<Integer,Driver> drivers = new HashMap<>();
-        Map<Integer,Car> cars = new HashMap<>();
-        try (Statement ps = connection.createStatement()){
-            ResultSet rs = ps.executeQuery(
-                    "select * from car " +
-                        "left join car_driver on " +
-                            "car.idcar = car_driver.car_idcar " +
-                        "left join driver on " +
-                            "car_driver.driver_driver_id = " +
-                            "driver.driver_id");
-            while ( rs.next() ){
-                Car car = extractFromResultSet(rs);
-                Driver driver =
-                        JDBCDriverDao.extractFromResultSet(rs);
-                car = makeUniqueCar( cars, car);
-                driver = makeUniqueDriver(drivers,driver);
-                car.getDrivers().add(driver);
-                driver.getCars().add(car);
-                System.out.println(driver);
-
-                resultList.add(car);
-            }
-        } catch (ExceptionCommandServlet e) {
-            throw new RuntimeException(e);
-        }
-        return resultList;
-    }
-
-
-    private Car makeUniqueCar(Map<Integer, Car> cars,  Car car) {
-        cars.putIfAbsent(car.getIdCar(), car);
-        return cars.get(car.getIdCar());
-    }
-
-    private Driver makeUniqueDriver(
-            Map<Integer, Driver> drivers, Driver driver) {
-        drivers.putIfAbsent(driver.getIddriver(),
-                driver);
-        return drivers.get(driver.getIddriver());
-    }*/
 
         @Override
         public void close() {
             try {
                 connection.close();
             } catch (SQLException e) {
+                logger.error(e.getMessage());
                 throw new RuntimeException(e);
             }
         }

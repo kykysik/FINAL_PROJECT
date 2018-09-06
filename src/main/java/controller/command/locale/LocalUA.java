@@ -1,7 +1,7 @@
 package controller.command.locale;
 
 import model.entity.User;
-import model.services.CheckOnCorrectness;
+import model.services.user.CheckOnCorrectness;
 
 import java.util.Locale;
 import java.util.ResourceBundle;

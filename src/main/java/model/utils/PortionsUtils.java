@@ -1,8 +1,11 @@
 package model.utils;
 
-import model.dao.PortionsDao;
+import model.dao.impl.portion.PortionsDao;
+import model.dao.mapper.portion.PortionMapImpl;
+import model.dao.mapper.portion.PortionMapper;
 import model.entity.Portions;
 import model.entity.Product;
+import org.apache.log4j.Logger;
 
 import java.sql.Connection;
 import java.sql.Date;
@@ -11,9 +14,25 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.*;
 
-public class PortionsUtils implements PortionsDao {
+import static view.SqlConstant.*;
 
+public class PortionsUtils implements PortionsDao {
+    private static final String COUNT = "count";
+    private static final String AMOUNT = "amount";
+    private static final String ID = "id";
+    private static final String NAME = "name";
+    private static final String CALORIES = "calories";
+    private static final String PRODUCT_ID = "productId";
+    private static final String PRODUCT_NAME = "productName";
+    private static final String PR_ID = "prId";
+    private static final String PR_NAME = "prName";
+    private static final String PROTEINS = "proteins";
+    private static final String CARBOHYDRATES = "carbohydrates";
+    private static final String FATS = "fats";
+    private static final String PRODUCT_CALORIES = "productCalories";
+    private static final Logger logger = Logger.getLogger(PortionsUtils.class);
     Connection connection;
+    PortionMapper portionMapper = new PortionMapImpl();
 
     public PortionsUtils(Connection connection) {
         this.connection = connection;
@@ -21,18 +40,17 @@ public class PortionsUtils implements PortionsDao {
 
     @Override
     public boolean create(Portions entity) {
-        String preSql = "SELECT COUNT(1) AS count FROM portions WHERE name = ?";
-        try(PreparedStatement pstm = connection.prepareStatement(preSql)) {
+        try(PreparedStatement pstm = connection.prepareStatement(PORTIONS_PRE_CREATE)) {
             connection.setAutoCommit(false);
+            connection.setTransactionIsolation(Connection.TRANSACTION_REPEATABLE_READ);
 
             pstm.setString(1, entity.getName());
 
             ResultSet rs = pstm.executeQuery();
             if (rs.next()) {
-                int count = rs.getInt("count");
+                int count = rs.getInt(COUNT);
                 if(count == 0) {
-                    String sql = " INSERT INTO portions(name, calories) VALUES (?, ?)";
-                    try(PreparedStatement pstm1 = connection.prepareStatement(sql)) {
+                    try(PreparedStatement pstm1 = connection.prepareStatement(PORTIONS_CREATE_SQL)) {
                         pstm1.setString(1, entity.getName());
                         pstm1.setFloat(2, entity.getCalories());
                         pstm1.executeUpdate();
@@ -40,23 +58,21 @@ public class PortionsUtils implements PortionsDao {
                         return true;
                     } catch (SQLException e) {
                         connection.rollback();
-                         e.printStackTrace();
+                        logger.error(e.getMessage());
                     }
                 }
 
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            logger.error(e.getMessage());
         }
         return false;
     }
    @Override
     public void createPortionProduct(List product, List amount, int portionId) {
-        String sql = "INSERT INTO portions_products(portions_id, products_id, amount) VALUES (?, ?, ?)";
-
         try {
             connection.setAutoCommit(false);
-                try (PreparedStatement pstm = connection.prepareStatement(sql)) {
+                try (PreparedStatement pstm = connection.prepareStatement(CREATE_PORTION_PRODUCT)) {
                     for(int i = 0; i < product.size(); i++) {
                         Product prod = (Product) product.get(i);
                         pstm.setInt(1, portionId);
@@ -68,66 +84,64 @@ public class PortionsUtils implements PortionsDao {
                     connection.commit();
                 } catch (SQLException e) {
                     connection.rollback();
-                    e.printStackTrace();
+                    logger.error(e.getMessage());
                 }
         } catch (SQLException e) {
-            e.printStackTrace();
+            logger.error(e.getMessage());
         }
     }
 
     @Override
     public Portions findPortion(Portions portions) {
-        String sql = "SELECT id FROM portions WHERE name = ?";
-            try(PreparedStatement pstm = connection.prepareStatement(sql)) {
+        Map<Integer, Portions> portionsMap = new HashMap<>();
+
+        try(PreparedStatement pstm = connection.prepareStatement(FIND_PORTION)) {
                 pstm.setString(1, portions.getName());
                 ResultSet rs = pstm.executeQuery();
                 if (rs.next()) {
-                    int portionId = rs.getInt("id");
-                    portions.setId(portionId);
-
+                    portions = portionMapper.extractFromResultId(rs);
+                    portions = portionMapper.makeUnique(portionsMap, portions);
+                    return portions;
                 }
 
             } catch (SQLException e) {
-                e.printStackTrace();
+                 logger.error(e.getMessage());
             }
     return portions;
     }
 
     @Override
     public List<Portions> findAll(int currentPage, int recordsPerPage) {
-        String sql = "SELECT id, name, calories FROM portions LIMIT ?, ?";
+        Map<Integer, Portions> portionsMap = new HashMap<>();
         int start = currentPage * recordsPerPage - recordsPerPage;
         List<Portions> list = new ArrayList<>();
 
-        try(PreparedStatement pstm = connection.prepareStatement(sql)) {
+        try(PreparedStatement pstm = connection.prepareStatement(FIND_ALL_PORTIONS)) {
             pstm.setInt(1, start);
             pstm.setInt(2, recordsPerPage);
 
             ResultSet rs = pstm.executeQuery();
 
             while (rs.next()) {
-                int id = rs.getInt("id");
-                String name = rs.getString("name");
-                Float calories = rs.getFloat("calories");
-                list.add(new Portions(id, name, calories));
+                Portions portions = portionMapper.extractFromResultSet(rs);
+                portions = portionMapper.makeUnique(portionsMap, portions);
+                list.add(portions);
             }
 
         } catch (SQLException e) {
-            e.printStackTrace();
+            logger.error(e.getMessage());
         }
         return list;
     }
 
     @Override
     public List<Portions> findAllByDate(int currentPage, int recordsPerPage, int userId, Date date) {
-        String sql = "SELECT user_id, portions.id, name, calories, amount, date " +
-                "FROM portions JOIN user_portions u ON portions.id = u.portions_id " +
-                "JOIN user u2 ON u.user_id = u2.id WHERE user_id = ? AND date = ? LIMIT ?, ?";
+        Map<Integer, Portions> portionsMap = new HashMap<>();
 
         int start = currentPage * recordsPerPage - recordsPerPage;
         List<Portions> foods = new ArrayList<>();
 
-        try(PreparedStatement pstm = connection.prepareStatement(sql)) {
+        try(PreparedStatement pstm = connection.prepareStatement(FIND_ALL_BY_DATE_PORTIONS)) {
             pstm.setInt(1, userId);
             pstm.setDate(2, date);
             pstm.setInt(3, start);
@@ -136,28 +150,19 @@ public class PortionsUtils implements PortionsDao {
             ResultSet rs = pstm.executeQuery();
 
             while (rs.next()) {
-                int id = rs.getInt("id");
-                String name = rs.getString("name");
-                Float calories = rs.getFloat("calories");
-                int amount  = rs.getInt("amount");
-                foods.add(new Portions(id, name, calories, amount));
+                Portions portions = portionMapper.extractFromResultAmount(rs);
+                portions = portionMapper.makeUnique(portionsMap, portions);
+                foods.add(portions);
             }
 
         } catch (SQLException e) {
-            e.printStackTrace();
-            e.getMessage();
+            logger.error(e.getMessage());
         }
         return foods;
     }
 
     @Override
     public Map find(int id) {
-        String sql = "SELECT po.id, po.name, po.calories,pr.id as prId, pr.name as prName, pr.fats, pr.calories as productCalories," +
-                "pr.proteins, pr.carbohydrates, product.amount " +
-                "FROM portions po " +
-                "JOIN portions_products product ON po.id = product.portions_id " +
-                "JOIN products pr ON product.products_id = pr.id " +
-                "WHERE po.id = ?";
 
         Map<String, List> map = new HashMap<>();
         List<Integer> poId = new ArrayList<Integer>();
@@ -169,24 +174,24 @@ public class PortionsUtils implements PortionsDao {
         List<Float> prCalories = new ArrayList<Float>();
         List<Integer> ppAmount = new ArrayList<Integer>();
 
-        try(PreparedStatement pstm = connection.prepareStatement(sql)) {
+        try(PreparedStatement pstm = connection.prepareStatement(FIND_PORTIONS)) {
             pstm.setInt(1, id);
 
             poId.add(id);
-            map.put("id", poId);
+            map.put(ID, poId);
 
             ResultSet rs = pstm.executeQuery();
 
             while (rs.next()) {
-                String portionsName = rs.getString("name");
-                Integer productId = rs.getInt("prId");
-                Float portionCalories = rs.getFloat("calories");
-                String productsName = rs.getString("prName");
-                Float productsProteins = rs.getFloat("proteins");
-                Float productsCarbohydrates = rs.getFloat("carbohydrates");
-                Float productsFats = rs.getFloat("fats");
-                Float productsCalories= rs.getFloat("productCalories");
-                Integer Amount= rs.getInt("amount");
+                String portionsName = rs.getString(NAME);
+                Integer productId = rs.getInt(PR_ID);
+                Float portionCalories = rs.getFloat(CALORIES);
+                String productsName = rs.getString(PR_NAME);
+                Float productsProteins = rs.getFloat(PROTEINS);
+                Float productsCarbohydrates = rs.getFloat(CARBOHYDRATES);
+                Float productsFats = rs.getFloat(FATS);
+                Float productsCalories= rs.getFloat(PRODUCT_CALORIES);
+                Integer Amount= rs.getInt(AMOUNT);
                 prId.add(productId);
                 prName.add(productsName);
                 proteins.add(productsProteins);
@@ -194,20 +199,20 @@ public class PortionsUtils implements PortionsDao {
                 fats.add(productsFats);
                 prCalories.add(productsCalories);
                 ppAmount.add(Amount);
-                map.put("amount", ppAmount);
-                map.put("calories", Collections.singletonList(portionCalories));
-                map.put("name", Collections.singletonList(portionsName));
-                map.put("productId", prId);
-                map.put("productName", prName);
-                map.put("proteins", proteins);
-                map.put("carbohydrates", carbohydrates);
-                map.put("fats", fats);
-                map.put("productCalories", prCalories);
+                map.put(AMOUNT, ppAmount);
+                map.put(CALORIES, Collections.singletonList(portionCalories));
+                map.put(NAME, Collections.singletonList(portionsName));
+                map.put(PRODUCT_ID, prId);
+                map.put(PRODUCT_NAME, prName);
+                map.put(PROTEINS, proteins);
+                map.put(CARBOHYDRATES, carbohydrates);
+                map.put(FATS, fats);
+                map.put(PRODUCT_CALORIES, prCalories);
 
             }
 
         } catch (SQLException e) {
-            e.printStackTrace();
+            logger.error(e.getMessage());
         }
         return map;
     }
@@ -216,28 +221,25 @@ public class PortionsUtils implements PortionsDao {
     public int getNumberOfRows() {
 
         int numOfRows = 0;
-        String sql = "SELECT COUNT(id) as id FROM portions";
-
-        try(PreparedStatement pstm = connection.prepareStatement(sql)) {
+        try(PreparedStatement pstm = connection.prepareStatement(GET_NUMBER_PORTIONS)) {
 
             ResultSet rs = pstm.executeQuery();
 
             while (rs.next()) {
-                numOfRows = rs.getInt("id");
+                numOfRows = rs.getInt(ID);
             }
         } catch (SQLException e) {
-            e.getMessage();
-            e.printStackTrace();
+            logger.error(e.getMessage());
+
         }
         return numOfRows;
     }
 
     @Override
     public void eatPortion(List portionsId, List amount, int userId, Date date) {
-        String sql = "INSERT INTO user_portions(user_id, portions_id, amount, date) VALUES (?, ?, ?, ?)";
         try {
             connection.setAutoCommit(false);
-            try(PreparedStatement pstm = connection.prepareStatement(sql)) {
+            try(PreparedStatement pstm = connection.prepareStatement(EAT_PORTIONS)) {
                 for(int i = 0; i < portionsId.size(); i++) {
                     pstm.setInt(1, userId);
                     pstm.setInt(2, (Integer) portionsId.get(i));
@@ -250,10 +252,10 @@ public class PortionsUtils implements PortionsDao {
                 connection.commit();
             } catch (SQLException e) {
                 connection.rollback();
-                e.printStackTrace();
+                logger.error(e.getMessage());
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            logger.error(e.getMessage());
         }
 
 
@@ -261,10 +263,9 @@ public class PortionsUtils implements PortionsDao {
 
     @Override
     public void editPortion(List count, List id, int portionId) {
-        String sql = "INSERT INTO portions_products SET portions_id = ?, products_id = ?, amount = ?";
         try {
             connection.setAutoCommit(false);
-                try(PreparedStatement pstm = connection.prepareStatement(sql)) {
+                try(PreparedStatement pstm = connection.prepareStatement(EDIT_PORTIONS)) {
                     for(int i = 0; i < id.size(); i++) {
                         pstm.setInt(1, portionId);
                         pstm.setInt(2, (Integer) id.get(i));
@@ -275,62 +276,55 @@ public class PortionsUtils implements PortionsDao {
                     connection.commit();
                 } catch (SQLException e) {
                     connection.rollback();
-                    e.printStackTrace();
+                    logger.error(e.getMessage());
                 }
         } catch (SQLException e) {
-            e.printStackTrace();
+            logger.error(e.getMessage());
         }
 
     }
 
     @Override
     public void update(Portions portions) {
-        String sql = "UPDATE portions SET name = ?, calories = ? WHERE  id = ?";
-        try(PreparedStatement pstm = connection.prepareStatement(sql)) {
+        try(PreparedStatement pstm = connection.prepareStatement(UPDATE_PORTIONS)) {
             pstm.setString(1, portions.getName());
             pstm.setFloat(2, portions.getCalories());
             pstm.setInt(3, portions.getId());
             pstm.executeUpdate();
         } catch (SQLException e) {
-            e.printStackTrace();
+            logger.error(e.getMessage());
         }
     }
 
     @Override
     public void deleteById(int portionId, int productId) {
-        String sql = "DELETE FROM portions_products WHERE portions_id = ? AND products_id = ?";
-
-        try(PreparedStatement pstm = connection.prepareStatement(sql)) {
+        try(PreparedStatement pstm = connection.prepareStatement(DELETE_BY_ID_PORTIONS)) {
             pstm.setInt(1, portionId);
             pstm.setInt(2, productId);
             pstm.executeUpdate();
         } catch (SQLException e) {
-            e.printStackTrace();
+            logger.error(e.getMessage());
         }
     }
 
     @Override
     public void deleteUserPortion(int id) {
-        String sql = "DELETE FROM user_portions WHERE id = ?";
-
-        try(PreparedStatement pstm = connection.prepareStatement(sql)) {
+        try(PreparedStatement pstm = connection.prepareStatement(DELETE_USER_PORTIONS)) {
             pstm.setInt(1, id);
 
             pstm.executeUpdate();
         } catch (SQLException e) {
-            e.printStackTrace();
+            logger.error(e.getMessage());
         }
     }
 
     @Override
     public void delete(int id) {
-        String sql = "DELETE FROM portions WHERE id = ? ";
-
-        try(PreparedStatement pstm = connection.prepareStatement(sql)) {
+        try(PreparedStatement pstm = connection.prepareStatement(DELETE_PORTIONS)) {
             pstm.setInt(1, id);
             pstm.executeUpdate();
         } catch (SQLException e) {
-            e.printStackTrace();
+            logger.error(e.getMessage());
         }
     }
 
@@ -339,9 +333,9 @@ public class PortionsUtils implements PortionsDao {
     @Override
     public void close() {
         try {
-
             connection.close();
         } catch (SQLException e) {
+            logger.error(e.getMessage());
             throw new RuntimeException(e);
         }
     }

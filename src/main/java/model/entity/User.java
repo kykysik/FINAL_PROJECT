@@ -42,6 +42,74 @@ public class User {
         USER, UNKNOWN, ADMIN
     }
 
+    public static class Builder {
+        private User user = new User();
+
+        public Builder setLogin(String login) {
+            user.login = login;
+            return this;
+        }
+
+        public Builder setId(int id) {
+            user.id = id;
+            return this;
+        }
+
+        public Builder setGender(String gender) {
+            user.gender = gender;
+            return this;
+        }
+
+        public Builder setPassword(String password) {
+            user.password = password;
+            return this;
+        }
+
+        public Builder setNormCalories(Float norm) {
+            user.normCalories = norm;
+            return this;
+        }
+
+        public Builder setWeight(Float weight) {
+            user.weight = weight;
+            return this;
+        }
+
+        public Builder setHeight(Float height) {
+            user.height = height;
+            return this;
+        }
+
+        public Builder setActivity(Float activity) {
+            user.lifeActivity = activity;
+            return this;
+        }
+
+        public Builder setSecondName(String secondName) {
+            user.secondName = secondName;
+            return this;
+        }
+
+        public Builder setFirstName(String firstName) {
+            user.firstName = firstName;
+            return this;
+        }
+
+        public Builder setMiddleName(String middleName) {
+            user.middleName = middleName;
+            return this;
+        }
+
+        public Builder setBirthDate(LocalDate date) {
+            user.birthDate = date;
+            return this;
+        }
+
+        public User build() {
+            return user;
+        }
+    }
+
     public int getId() {
         return id;
     }

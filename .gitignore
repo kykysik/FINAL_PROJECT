@@ -7,3 +7,4 @@ target/*
 .gitignore
 web_task1.iml
 lib/*
+log_file.log
