@@ -3,7 +3,7 @@
 *.jar
 *.ear
 out/*
-target/*
+target/
 .gitignore
 web_task1.iml
 lib/*
